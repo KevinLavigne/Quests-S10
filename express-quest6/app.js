@@ -112,13 +112,36 @@ app.post('/api/users', (req, res) => {
 	);
 });
 
-app.get('/api/users', (req, res) => {
-	connection.query('SELECT * FROM users', (err, result) => {
+app.get("/api/users", (req, res) => {
+  let sql = "SELECT * FROM users";
+  const sqlValues = [];
+
+  if (req.query.language) {
+    sql += " WHERE language = ?";
+    sqlValues.push(req.query.language);
+  }
+
+  connection.query(sql, sqlValues, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Error retrieving users from database");
+    } else {
+      res.json(result);
+    }
+  });
+});
+
+
+app.get('/api/users/:id', (req, res) => {
+	const userId = req.params.id;
+	connection.query(`SELECT * FROM users WHERE id = ?`, [userId], (err, result) => {
 		//do something when mysql is done executing the query
 		if (err) {
 			res.status(500).send('Error retrieving data from database');
+		} else if (result.length === 0 || result[0] === undefined){
+			res.status(404).send('User not')
 		} else {
-			res.status(200).json(result);
+			res.status(200).json(result[0]);
 		}
 	});
 });
